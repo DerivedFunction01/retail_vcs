@@ -1,0 +1,11 @@
+{
+  "description": "Swap the SKU of an item while preserving all other properties and linked allocations.",
+  "action": { "const": "modify_sku" },
+  "required": ["action", "line_id", "before_sku", "after_sku"],
+  "properties": {
+    "action": { "const": "modify_sku" },
+    "line_id": { "type": "string" },
+    "before_sku": { "type": "string" },
+    "after_sku": { "type": "string" }
+  }
+}

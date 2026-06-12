@@ -11,7 +11,6 @@ import {
   Layers,
   ArrowRight,
   BookOpen,
-  Github,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -83,7 +82,7 @@ export function FeaturesSection() {
 
   return (
     <section id="features" ref={ref} className="py-24 sm:py-32 relative">
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-primary/30 to-transparent" />
 
       {/* Background glows */}
       <div className="absolute top-1/2 left-0 w-96 h-96 rounded-full bg-primary/3 blur-[200px] -translate-y-1/2" />
@@ -166,7 +165,7 @@ export function FeaturesSection() {
                 className="rounded-xl border border-border/50 bg-card/30 backdrop-blur-sm p-6 sm:p-8 hover:border-primary/20 transition-colors duration-300 group"
               >
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/15 transition-colors">
+                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
                     <Icon className={`w-6 h-6 ${feature.color}`} />
                   </div>
                   <div>

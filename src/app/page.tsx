@@ -7,13 +7,13 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { HeroSection } from "@/components/sections/hero";
 import { ArchitectureSection } from "@/components/sections/architecture";
 import { MutationsSection } from "@/components/sections/mutations";
 import { BranchesSection } from "@/components/sections/branches";
 import { MergeSection } from "@/components/sections/merge";
 import { QueryEngineSection } from "@/components/sections/query-engine";
+import PlaybookViewer from "@/components/sections/PlaybookViewer";
 import { FeaturesSection, Footer } from "@/components/sections/features";
 
 const navItems = [
@@ -22,6 +22,7 @@ const navItems = [
   { id: "query", label: "Query Engine" },
   { id: "merge", label: "Merge" },
   { id: "branches", label: "Branches" },
+  { id: "playbooks", label: "Playbooks" },
   { id: "features", label: "Features" },
 ];
 
@@ -155,6 +156,9 @@ export default function HomePage() {
         <QueryEngineSection />
         <MergeSection />
         <BranchesSection />
+        <section id="playbooks" className="py-16 lg:py-24">
+          <PlaybookViewer />
+        </section>
         <FeaturesSection />
       </main>
 

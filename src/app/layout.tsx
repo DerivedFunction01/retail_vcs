@@ -30,7 +30,8 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Retail VCS Project" }],
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    // from public/logo.svg
+    icon: "/logo.svg" 
   },
   openGraph: {
     title: "Retail VCS — Version-Controlled Commerce Architecture",

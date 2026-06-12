@@ -7,6 +7,13 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   reactStrictMode: false,
+  turbopack: {
+    rules: {
+      '*.txt': {
+        type: 'raw'
+      }
+    },
+  },
 };
 
 export default nextConfig;

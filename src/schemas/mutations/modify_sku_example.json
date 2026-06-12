@@ -1,0 +1,6 @@
+{
+  "action": "modify_sku",
+  "line_id": "line-001-burger",
+  "before_sku": "SKU-BURGER-CLASSIC",
+  "after_sku": "SKU-CHICKEN-SANDWICH"
+}

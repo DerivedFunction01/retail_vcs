@@ -11,12 +11,29 @@ import {
   ChevronDown,
   ChevronRight,
   Copy,
+  Tag,
   FileJson,
   Code2,
-  BookOpen,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+// Import mutation schemas and examples
+import declareAllocationSchema from "@/schemas/mutations/declare_allocation_schema.json";
+import declareAllocationExample from "@/schemas/mutations/declare_allocation_example.json";
+import addItemSchema from "@/schemas/mutations/add_item_schema.json";
+import addItemExample from "@/schemas/mutations/add_item_example.json";
+import addItemOfferSchema from "@/schemas/mutations/add_item_offer_schema.json";
+import addItemOfferExample from "@/schemas/mutations/add_item_offer_example.json";
+import removeItemSchema from "@/schemas/mutations/remove_item_schema.json";
+import removeItemExample from "@/schemas/mutations/remove_item_example.json";
+import modifySkuSchema from "@/schemas/mutations/modify_sku_schema.json";
+import modifySkuExample from "@/schemas/mutations/modify_sku_example.json";
+import modifyItemAllocationsSchema from "@/schemas/mutations/modify_item_allocations_schema.json";
+import modifyItemAllocationsExample from "@/schemas/mutations/modify_item_allocations_example.json";
+import batchByFilterSchema from "@/schemas/mutations/batch_by_filter_schema.json";
+import batchByFilterExample from "@/schemas/mutations/batch_by_filter_example.json";
+import VcsDeltaCommitEnvelopeSchema from "@/schemas/vcs-delta-commit-envelope.json";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -43,81 +60,8 @@ const mutations: Mutation[] = [
     icon: GitBranch,
     description: "Register or update a first-class allocation contract at the ledger level",
     color: "text-primary",
-    schema: `{
-  "description": "Declare or update an allocation contract
-    (assignment, payment, fulfillment) at the global
-    repository level.",
-  "action": { "const": "declare_allocation" },
-  "required": ["action", "allocation"],
-  "properties": {
-    "action": { "const": "declare_allocation" },
-    "allocation": { "$ref": "allocation_block" }
-  }
-}
-
-// ── allocation_block (oneOf 3 variants) ──
-// Required: allocation_id, type
-
-// Variant 1: assignment
-{
-  "type": { "const": "assignment" },
-  "entity": { "type": "string" }           // required
-}
-
-// Variant 2: payment
-{
-  "type": { "const": "payment" },
-  "payer": { "type": "string" },            // required
-  "method": { "type": ["string", "null"] }, // required
-  "payment_strategy": {                     // required
-    "strategy_type": {
-      "enum": ["percentage", "fixed", "remaining"]
-    },
-    "value": { "type": ["number", "null"] }
-  },
-  "time_of_payment": {                     // required
-    "type": { "type": "string" },
-    "calculated_at": {
-      "type": ["string", "null"],
-      "format": "date-time"
-    }
-  }
-}
-
-// Variant 3: fulfillment
-{
-  "type": { "const": "fulfillment" },
-  "method": { "type": "string" },          // required
-  "time": { /* same shape as time_of_payment */ }, // required
-  "fulfillment_metadata": {                // required
-    "destination_label": { "type": "string" },
-    "destination_id": {
-      "type": ["string", "null"]
-    }
-  }
-}
-
-// Shared fields on allocation_block:
-// allocation_id: string  (required, globally unique)
-// correlation_id: string|null (optional, logical grouping)`,
-    code: `{
-  "action": "declare_allocation",
-  "allocation": {
-    "allocation_id": "alloc-102-pay",
-    "correlation_id": "customer-alice-group",
-    "type": "payment",
-    "payer": "Alice",
-    "method": "Visa",
-    "payment_strategy": {
-      "strategy_type": "percentage",
-      "value": 0.6
-    },
-    "time_of_payment": {
-      "type": "immediate",
-      "calculated_at": "2026-06-11T16:30:00Z"
-    }
-  }
-}`,
+    schema: JSON.stringify(declareAllocationSchema, null, 2),
+    code: JSON.stringify(declareAllocationExample, null, 2),
     details: [
       "Creates unique allocation_id at ledger level — declared once",
       "Three variants: assignment (who), payment (how much), fulfillment (where)",
@@ -130,53 +74,8 @@ const mutations: Mutation[] = [
     icon: Plus,
     description: "Append new item, modifier, or offer line-item to the transaction tree",
     color: "text-emerald-400",
-    schema: `{
-  "description": "Add an item, modifier, or offer line-item
-    to the transaction tree.",
-  "action": { "const": "add_item" },
-  "required": [
-    "action", "line_id", "parent_line_id",
-    "sku", "qty", "allocations"
-  ],
-  "properties": {
-    "action": { "const": "add_item" },
-    "line_id": { "type": "string" },
-    "parent_line_id": { "type": ["string", "null"] },
-    "sku": { "type": "string" },
-    "qty": {
-      "type": "number",
-      "minimum": 0.0001
-    },
-    "allocations": {
-      "type": "array",
-      "items": { "type": "string" },
-      "description": "Flat array of unique allocation IDs
-        associated with this item."
-    }
-  }
-}`,
-    code: `// Adding a burger to Bob's order
-{
-  "action": "add_item",
-  "line_id": "line-001-burger",
-  "parent_line_id": null,
-  "sku": "SKU-BURGER-CLASSIC",
-  "qty": 1,
-  "allocations": [
-    "alloc-001-assign-bob",
-    "alloc-002-pay-bob"
-  ]
-}
-
-// Adding a modifier (parent-linked)
-{
-  "action": "add_item",
-  "line_id": "line-002-no-onions",
-  "parent_line_id": "line-001-burger",
-  "sku": "MOD-NO-ONIONS",
-  "qty": 1,
-  "allocations": []
-}`,
+    schema: JSON.stringify(addItemSchema, null, 2),
+    code: JSON.stringify(addItemExample, null, 2),
     details: [
       "Creates immutable line_id — never conflicts on add",
       "Parent linking (parent_line_id) enables combo/modifier trees",
@@ -185,36 +84,26 @@ const mutations: Mutation[] = [
     ],
   },
   {
+    action: "add_item_offer",
+    icon: Tag,
+    description: "Add a discount or promotional offer as a line-item",
+    color: "text-violet-400",
+    schema: JSON.stringify(addItemOfferSchema, null, 2),
+    code: JSON.stringify(addItemOfferExample, null, 2),
+    details: [
+      "Offers are standard line items, identified by promotional SKUs",
+      "parent_line_id: null for global offers, linked for item-specific discounts",
+      "qty minimum enforced at 0.0001",
+      "Allocations can be linked to offers for specific payer discounts",
+    ],
+  },
+  {
     action: "remove_item",
     icon: Trash2,
     description: "Remove or decrease quantity of an item; cascades children on full removal",
     color: "text-red-400",
-    schema: `{
-  "description": "Remove or decrease the quantity of an item.",
-  "action": { "const": "remove_item" },
-  "required": ["action", "line_id", "qty"],
-  "properties": {
-    "action": { "const": "remove_item" },
-    "line_id": { "type": "string" },
-    "qty": {
-      "type": "number",
-      "minimum": 0.0001
-    }
-  }
-}`,
-    code: `// Reduce quantity by 1
-{
-  "action": "remove_item",
-  "line_id": "line-001-burger",
-  "qty": 1
-}
-
-// Full void (cascading deletion)
-{
-  "action": "remove_item",
-  "line_id": "line-001-burger",
-  "qty": 999   // triggers cascade to all children
-}`,
+    schema: JSON.stringify(removeItemSchema, null, 2),
+    code: JSON.stringify(removeItemExample, null, 2),
     details: [
       "Quantity reduction — not destructive delete from ledger",
       "When projected qty ≤ 0, triggers cascading deletion rule",
@@ -227,25 +116,8 @@ const mutations: Mutation[] = [
     icon: Pencil,
     description: "Swap SKU of an item while preserving all other properties and linked allocations",
     color: "text-amber-accent",
-    schema: `{
-  "description": "Swap the SKU of an item while preserving
-    all other properties and linked allocations.",
-  "action": { "const": "modify_sku" },
-  "required": ["action", "line_id", "before_sku", "after_sku"],
-  "properties": {
-    "action": { "const": "modify_sku" },
-    "line_id": { "type": "string" },
-    "before_sku": { "type": "string" },
-    "after_sku": { "type": "string" }
-  }
-}`,
-    code: `// Kitchen out of burgers → substitute chicken
-{
-  "action": "modify_sku",
-  "line_id": "line-001-burger",
-  "before_sku": "SKU-BURGER-CLASSIC",
-  "after_sku": "SKU-CHICKEN-SANDWICH"
-}`,
+    schema: JSON.stringify(modifySkuSchema, null, 2),
+    code: JSON.stringify(modifySkuExample, null, 2),
     details: [
       "Only operation that 'updates' an existing item",
       "Keeps linked allocations intact (no payment reassignment needed)",
@@ -258,34 +130,8 @@ const mutations: Mutation[] = [
     icon: GitBranch,
     description: "Replace linked allocation IDs on a line item (race-protected)",
     color: "text-violet-400",
-    schema: `{
-  "description": "Replace the array of linked allocation
-    contract IDs associated with an existing line item.",
-  "action": { "const": "modify_item_allocations" },
-  "required": [
-    "action", "line_id",
-    "before_allocations", "after_allocations"
-  ],
-  "properties": {
-    "action": { "const": "modify_item_allocations" },
-    "line_id": { "type": "string" },
-    "before_allocations": {
-      "type": "array",
-      "items": { "type": "string" }
-    },
-    "after_allocations": {
-      "type": "array",
-      "items": { "type": "string" }
-    }
-  }
-}`,
-    code: `// Reassign item from Alice's payment to Bob's
-{
-  "action": "modify_item_allocations",
-  "line_id": "line-001-salad",
-  "before_allocations": ["alloc-alice-pay"],
-  "after_allocations": ["alloc-bob-pay"]
-}`,
+    schema: JSON.stringify(modifyItemAllocationsSchema, null, 2),
+    code: JSON.stringify(modifyItemAllocationsExample, null, 2),
     details: [
       "Race-protected via before_allocations comparison check",
       "Used for split-check reassignment, table transfers",
@@ -297,90 +143,8 @@ const mutations: Mutation[] = [
     icon: Filter,
     description: "Declarative batch mutation: engine resolves targets from filter + base_revision",
     color: "text-cyan-400",
-    schema: `{
-  "description": "Evaluate a list of filter rules against a
-    stable historical state, resolving targets and
-    modifying their properties as a single atomic
-    batch delta.",
-  "action": { "const": "batch_by_filter" },
-  "required": [
-    "action", "base_revision_id",
-    "filters", "template_mutation"
-  ],
-  "properties": {
-    "action": { "const": "batch_by_filter" },
-    "base_revision_id": {
-      "type": "string",
-      "description": "Exact historical commit hash used
-        to anchor and resolve query results
-        deterministically."
-    },
-    "filters": {
-      "type": "array",
-      "items": { "$ref": "FilterRule" }
-    },
-    "template_mutation": {
-      "type": "object",
-      "required": ["mutation_type"],
-      "oneOf": [
-        // 1. batch_modify_allocations
-        {
-          "mutation_type": { "const": "batch_modify_allocations" },
-          "target_allocation_type": { "type": "string" },
-          "patch_allocation": { "$ref": "allocation_block" }
-        },
-        // 2. batch_remove_items
-        {
-          "mutation_type": { "const": "batch_remove_items" }
-        },
-        // 3. batch_modify_sku
-        {
-          "mutation_type": { "const": "batch_modify_sku" },
-          "after_sku": { "type": "string" }
-        },
-        // 4. batch_duplicate_and_reallocate
-        {
-          "mutation_type": { "const": "batch_duplicate_and_reallocate" },
-          "patch_allocations": {
-            "type": "array",
-            "items": { "$ref": "allocation_block" }
-          }
-        }
-      ]
-    }
-  }
-}`,
-    code: `// AI: "Reassign all of Alice's items to Bob"
-{
-  "action": "batch_by_filter",
-  "base_revision_id": "sha-a1b2c3d4",
-  "filters": [
-    {
-      "property": "payer",
-      "operator": "equals",
-      "value": "Alice"
-    }
-  ],
-  "template_mutation": {
-    "mutation_type": "batch_modify_allocations",
-    "target_allocation_type": "payment",
-    "patch_allocation": {
-      "allocation_id": "alloc-bob-pay",
-      "correlation_id": "customer-bob-group",
-      "type": "payment",
-      "payer": "Bob",
-      "method": "Cash",
-      "payment_strategy": {
-        "strategy_type": "percentage",
-        "value": 1.0
-      },
-      "time_of_payment": {
-        "type": "immediate",
-        "calculated_at": "2026-06-11T17:00:00Z"
-      }
-    }
-  }
-}`,
+    schema: JSON.stringify(batchByFilterSchema, null, 2),
+    code: JSON.stringify(batchByFilterExample, null, 2),
     details: [
       "AI writes filter — engine resolves matching targets deterministically",
       "Four mutation types: modify_allocations, remove_items, modify_sku, duplicate_and_reallocate",
@@ -429,7 +193,7 @@ function MutationCard({
         onClick={() => setIsOpen(!isOpen)}
         className="w-full text-left p-4 sm:p-5 flex items-start gap-4"
       >
-        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
           <Icon className={`w-5 h-5 ${mutation.color}`} />
         </div>
         <div className="flex-1 min-w-0">
@@ -454,7 +218,7 @@ function MutationCard({
             {mutation.description}
           </p>
         </div>
-        <div className="flex-shrink-0 mt-1">
+        <div className="shrink-0 mt-1">
           {isOpen ? (
             <ChevronDown className="w-4 h-4 text-muted-foreground" />
           ) : (
@@ -489,7 +253,7 @@ function MutationCard({
               </TabsList>
 
               <TabsContent value="schema" className="mt-0">
-                <div className="code-block text-xs sm:text-sm relative group !border-primary/20 !bg-primary/[0.03]">
+                <div className="code-block text-xs sm:text-sm relative group border-primary/20! bg-primary/3!">
                   <CopyButton text={mutation.schema} />
                   <pre className="whitespace-pre-wrap">
                     <code>{mutation.schema}</code>
@@ -498,7 +262,7 @@ function MutationCard({
               </TabsContent>
 
               <TabsContent value="example" className="mt-0">
-                <div className="code-block text-xs sm:text-sm relative group !border-amber-accent/20 !bg-amber-accent/[0.03]">
+                <div className="code-block text-xs sm:text-sm relative group border-amber-accent/20! bg-amber-accent/3!">
                   <CopyButton text={mutation.code} />
                   <pre className="whitespace-pre-wrap">
                     <code>{mutation.code}</code>
@@ -513,7 +277,7 @@ function MutationCard({
                   key={i}
                   className="flex items-start gap-2 text-xs sm:text-sm text-muted-foreground"
                 >
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary/50 mt-1.5 flex-shrink-0" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary/50 mt-1.5 shrink-0" />
                   {detail}
                 </div>
               ))}
@@ -525,83 +289,8 @@ function MutationCard({
   );
 }
 
-const envelopeSchema = `{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "VCSDeltaCommitEnvelope",
-  "description": "An immutable, cryptographic commit containing
-    fine-grained transaction deltas for version-controlled
-    shopping states.",
-  "type": "object",
-  "required": [
-    "commit_hash",
-    "parent_hash",
-    "merge_parent_hash",
-    "branch",
-    "timestamp",
-    "author_id",
-    "deltas"
-  ],
-  "properties": {
-    "commit_hash": {
-      "type": "string",
-      "description": "Cryptographic digest of this transaction
-        state update."
-    },
-    "parent_hash": {
-      "type": ["string", "null"],
-      "description": "Hash of the immediate previous commit.
-        Null for the root commit."
-    },
-    "merge_parent_hash": {
-      "type": ["string", "null"],
-      "description": "Hash of the secondary parent being merged in.
-        Non-null only on merge commits."
-    },
-    "branch": {
-      "type": "string",
-      "description": "Target workspace branch name
-        (e.g., 'main', 'split-check-whatif')."
-    },
-    "timestamp": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "author_id": {
-      "type": "string",
-      "description": "Identifies the cashier terminal, server,
-        customer application, or automated agent."
-    },
-    "metadata": {
-      "type": "object",
-      "additionalProperties": true
-    },
-    "deltas": {
-      "type": "array",
-      "description": "Chronological array of polymorphic state
-        changes within this commit.",
-      "items": {
-        "$ref": "#/$defs/DeltaOperation"
-      }
-    }
-  },
-  "$defs": {
-    "DeltaOperation": {
-      "type": "object",
-      "required": ["action"],
-      "oneOf": [
-        { "action": "declare_allocation" },
-        { "action": "add_item" },
-        { "action": "remove_item" },
-        { "action": "modify_item_allocations" },
-        { "action": "modify_sku" },
-        { "action": "batch_by_filter" }
-      ]
-    },
-    "FilterRule": { ... },
-    "allocation_block": { ... },
-    "modifier_block": { ... }
-  }
-}`;
+const envelopeSchema = JSON.stringify(VcsDeltaCommitEnvelopeSchema, null, 2);
+
 
 export function MutationsSection() {
   const ref = useRef<HTMLDivElement>(null);
@@ -610,7 +299,7 @@ export function MutationsSection() {
 
   return (
     <section id="mutations" ref={ref} className="py-24 sm:py-32 relative">
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-border to-transparent" />
 
       <div className="max-w-5xl mx-auto px-6">
         {/* Section header */}
@@ -661,7 +350,7 @@ export function MutationsSection() {
                 onClick={() => setEnvelopeOpen(!envelopeOpen)}
                 className="w-full text-left p-4 sm:p-5 flex items-center gap-3"
               >
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                   <FileJson className="w-4 h-4 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -678,13 +367,13 @@ export function MutationsSection() {
                   </div>
                   <p className="text-xs text-muted-foreground">
                     The outer commit wrapper — each commit carries a parent_hash,
-                    optional merge_parent_hash, and an array of delta operations
+                    optional merge_parent_hashes, and an array of delta operations
                   </p>
                 </div>
                 {envelopeOpen ? (
-                  <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                  <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
                 ) : (
-                  <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                  <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
                 )}
               </button>
 
@@ -695,7 +384,7 @@ export function MutationsSection() {
                   className="overflow-hidden"
                 >
                   <div className="px-4 sm:px-5 pb-5">
-                    <div className="code-block text-xs sm:text-sm relative group !border-primary/20 !bg-primary/[0.03]">
+                    <div className="code-block text-xs sm:text-sm relative group border-primary/20! bg-primary/3!">
                       <CopyButton text={envelopeSchema} />
                       <pre className="whitespace-pre-wrap">
                         <code>{envelopeSchema}</code>

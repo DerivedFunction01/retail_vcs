@@ -1,0 +1,6 @@
+{
+  "action": "modify_item_allocations",
+  "line_id": "line-001-salad",
+  "before_allocations": ["alloc-alice-pay"],
+  "after_allocations": ["alloc-bob-pay"]
+}

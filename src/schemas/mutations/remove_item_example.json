@@ -1,0 +1,13 @@
+[
+  {
+    "action": "remove_item",
+    "line_id": "line-001-burger",
+    "qty": 1,
+    "description": "Remove one burger from the order"
+  },
+  {
+    "action": "remove_item",
+    "line_id": "line-001-burger",
+    "description": "Remove all burgers from the order"
+  }
+]

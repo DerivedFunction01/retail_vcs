@@ -1,0 +1,57 @@
+{
+    "type": "object",
+    "required": [
+        "property",
+        "operator",
+        "value"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "property": {
+            "type": "string",
+            "enum": [
+                "name",
+                "sku",
+                "payer",
+                "assignee",
+                "fulfillment_method",
+                "sku_category",
+                "tax_status",
+                "price",
+                "quantity",
+                "popularity_index",
+                "dietary_flags",
+                "allergens",
+                "brand"
+            ]
+        },
+        "operator": {
+            "type": "string",
+            "enum": [
+                "equals",
+                "not_equals",
+                "in_set",
+                "not_in_set",
+                "greater_than",
+                "greater_than_or_equal",
+                "less_than",
+                "less_than_or_equal",
+                "like",
+                "not_like"
+            ]
+        },
+        "value": {
+            "type": [
+                "string",
+                "number",
+                "array"
+            ],
+            "items": {
+                "type": [
+                    "string",
+                    "number"
+                ]
+            }
+        }
+    }
+}

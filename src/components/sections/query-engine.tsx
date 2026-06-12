@@ -1,24 +1,21 @@
 "use client";
 
 import { motion, useInView } from "framer-motion";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import {
   Filter,
-  LayoutDashboard,
-  ShoppingCart,
-  Package,
   Tag,
   AlertTriangle,
   Clock,
   Zap,
-  ChevronDown,
-  ChevronRight,
   FileJson,
   Code2,
   Copy,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import VcsRetailUniversalQueryEnvelopeSchema from "@/schemas/vcs-retail-universal-query-envelope.json";
+import FilterRuleSchema from "@/schemas/filter-rule.json";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -40,109 +37,8 @@ const viewModes = [
   { name: "inventory_depletion_report" },
 ];
 
-const queryEnvelopeSchema = `{
-  "title": "VCSRetailUniversalQueryEnvelope",
-  "description": "Unified read-only projection request to filter,
-    slice, or aggregate an immutable retail repository
-    branch.",
-  "type": "object",
-  "required": [
-    "target_context",
-    "filter_delta",
-    "view_mode",
-    "order_constraints",
-    "commit"
-  ],
-  "properties": {
-    "target_context": {
-      "type": "object",
-      "required": ["context_type", "context_id", "revision_id"],
-      "additionalProperties": false,
-      "properties": {
-        "context_type": {
-          "type": "string",
-          "enum": ["cart", "catalog", "inventory_warehouse"]
-        },
-        "context_id": { "type": ["string", "null"] },
-        "revision_id": { "type": ["string", "null"] }
-      }
-    },
-    "filter_delta": {
-      "type": "object",
-      "required": ["add_filters", "remove_filters"],
-      "additionalProperties": false,
-      "properties": {
-        "add_filters": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/FilterRule" }
-        },
-        "remove_filters": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/FilterRule" }
-        }
-      }
-    },
-    "view_mode": {
-      "type": "string",
-      "enum": [
-        "item_level",
-        "aggregate_by_payer",
-        "kitchen_display_kds",
-        "tax_surcharge_breakdown",
-        "fulfillment_logistics_timeline",
-        "catalog_listing_view",
-        "recommendations_carousel",
-        "inventory_depletion_report"
-      ]
-    },
-    "order_constraints": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "budget_cap": { "type": ["number", "null"] },
-        "age_verification_required": { "type": "boolean" },
-        "allow_backorder": { "type": "boolean" }
-      }
-    },
-    "commit": {
-      "type": "boolean",
-      "description": "If true, freezes and locks the compiled
-        query state to prevent UI re-calculation."
-    }
-  }
-}`;
-
-const filterRuleSchema = `{
-  "type": "object",
-  "required": ["property", "operator", "value"],
-  "additionalProperties": false,
-  "properties": {
-    "property": {
-      "type": "string",
-      "enum": [
-        "name", "sku", "payer", "assignee",
-        "fulfillment_method", "sku_category",
-        "tax_status", "price", "quantity",
-        "popularity_index", "dietary_flags",
-        "allergens", "brand"
-      ]
-    },
-    "operator": {
-      "type": "string",
-      "enum": [
-        "equals", "not_equals",
-        "in_set", "not_in_set",
-        "greater_than", "greater_than_or_equal",
-        "less_than", "less_than_or_equal",
-        "like", "not_like"
-      ]
-    },
-    "value": {
-      "type": ["string", "number", "array"],
-      "items": { "type": ["string", "number"] }
-    }
-  }
-}`;
+const queryEnvelopeSchema = JSON.stringify(VcsRetailUniversalQueryEnvelopeSchema, null, 2);
+const filterRuleSchema = JSON.stringify(FilterRuleSchema, null, 2);
 
 const queryExample = `// AI: "Show me gluten-free desserts Bob didn't order"
 {
@@ -200,7 +96,7 @@ export function QueryEngineSection() {
 
   return (
     <section id="query" ref={ref} className="py-24 sm:py-32 relative">
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-border to-transparent" />
 
       <div className="max-w-7xl mx-auto px-6">
         {/* Section header */}
@@ -249,7 +145,7 @@ export function QueryEngineSection() {
             <div className="rounded-xl border border-border/50 bg-card/30 p-6 sm:p-8 overflow-x-auto">
               <h3 className="text-lg font-bold mb-6">Filter-View Pipeline</h3>
 
-              <div className="flex flex-col items-center gap-3 min-w-[300px]">
+              <div className="flex flex-col items-center gap-3 min-w-75">
                 <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-0 w-full">
                   <div className="flex-1 rounded-lg border border-cyan-400/20 bg-cyan-400/5 px-4 py-3 text-center">
                     <div className="text-xs text-cyan-400 font-semibold mb-0.5">
@@ -335,7 +231,7 @@ export function QueryEngineSection() {
             <div className="rounded-xl border border-border/50 bg-card/30 backdrop-blur-sm overflow-hidden">
               <Tabs defaultValue="envelope-schema" className="w-full">
                 <div className="p-4 sm:p-5 pb-0 flex items-center gap-3 flex-wrap">
-                  <div className="w-8 h-8 rounded-lg bg-cyan-400/10 flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-cyan-400/10 flex items-center justify-center shrink-0">
                     <FileJson className="w-4 h-4 text-cyan-400" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -375,7 +271,7 @@ export function QueryEngineSection() {
 
                 <div className="px-4 sm:px-5 pt-4 pb-5">
                   <TabsContent value="envelope-schema" className="mt-0">
-                    <div className="code-block text-xs sm:text-sm relative group !border-cyan-400/20 !bg-cyan-400/[0.03]">
+                    <div className="code-block text-xs sm:text-sm relative group border-cyan-400/20! bg-cyan-400/3!">
                       <CopyButton text={queryEnvelopeSchema} />
                       <pre className="whitespace-pre-wrap">
                         <code>{queryEnvelopeSchema}</code>
@@ -384,7 +280,7 @@ export function QueryEngineSection() {
                   </TabsContent>
 
                   <TabsContent value="filter-schema" className="mt-0">
-                    <div className="code-block text-xs sm:text-sm relative group !border-primary/20 !bg-primary/[0.03]">
+                    <div className="code-block text-xs sm:text-sm relative group border-primary/20! bg-primary/3!">
                       <CopyButton text={filterRuleSchema} />
                       <pre className="whitespace-pre-wrap">
                         <code>{filterRuleSchema}</code>
@@ -407,7 +303,7 @@ export function QueryEngineSection() {
                   </TabsContent>
 
                   <TabsContent value="query-example" className="mt-0">
-                    <div className="code-block text-xs sm:text-sm relative group !border-amber-accent/20 !bg-amber-accent/[0.03]">
+                    <div className="code-block text-xs sm:text-sm relative group border-amber-accent/20! bg-amber-accent/3!">
                       <CopyButton text={queryExample} />
                       <pre className="whitespace-pre-wrap">
                         <code>{queryExample}</code>
@@ -466,7 +362,7 @@ export function QueryEngineSection() {
                 </div>
                 <div className="space-y-3 text-sm text-muted-foreground">
                   <div className="flex items-start gap-2">
-                    <Clock className="w-4 h-4 text-violet-400/50 mt-0.5 flex-shrink-0" />
+                    <Clock className="w-4 h-4 text-violet-400/50 mt-0.5 shrink-0" />
                     <div>
                       <div className="font-medium text-foreground/80">
                         Time-Independent
@@ -478,7 +374,7 @@ export function QueryEngineSection() {
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
-                    <Zap className="w-4 h-4 text-violet-400/50 mt-0.5 flex-shrink-0" />
+                    <Zap className="w-4 h-4 text-violet-400/50 mt-0.5 shrink-0" />
                     <div>
                       <div className="font-medium text-foreground/80">
                         Render-Last Projection
@@ -490,7 +386,7 @@ export function QueryEngineSection() {
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
-                    <Filter className="w-4 h-4 text-violet-400/50 mt-0.5 flex-shrink-0" />
+                    <Filter className="w-4 h-4 text-violet-400/50 mt-0.5 shrink-0" />
                     <div>
                       <div className="font-medium text-foreground/80">
                         Scoped via Line Linkage

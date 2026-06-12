@@ -61,7 +61,7 @@ export function ArchitectureSection() {
   return (
     <section id="architecture" ref={ref} className="py-24 sm:py-32 relative">
       {/* Background accent */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-primary/30 to-transparent" />
 
       <div className="max-w-7xl mx-auto px-6">
         {/* Section header */}
@@ -199,7 +199,7 @@ export function ArchitectureSection() {
           <motion.div variants={fadeUp} custom={5}>
             <div className="rounded-xl border border-amber-accent/20 bg-card/50 backdrop-blur-sm p-6 sm:p-8">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-lg bg-amber-accent/10 flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-lg bg-amber-accent/10 flex items-center justify-center shrink-0">
                   <Cpu className="w-6 h-6 text-amber-accent" />
                 </div>
                 <div>
@@ -298,12 +298,12 @@ export function ArchitectureSection() {
                     {feature.dimension}
                   </div>
                   <div className="p-4 text-xs sm:text-sm text-muted-foreground/60 flex items-start gap-1.5">
-                    <X className="w-3.5 h-3.5 text-destructive/50 flex-shrink-0 mt-0.5" />
+                    <X className="w-3.5 h-3.5 text-destructive/50 shrink-0 mt-0.5" />
                     {feature.traditional}
                   </div>
                   <div className="p-4 text-xs sm:text-sm text-primary/80 flex items-start gap-1.5">
                     <Check
-                      className="w-3.5 h-3.5 text-primary flex-shrink-0 mt-0.5"
+                      className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5"
                       strokeWidth={3}
                     />
                     {feature.vcs}

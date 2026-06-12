@@ -1,0 +1,70 @@
+{
+  "description": "Evaluate a list of filter rules against a stable historical state, resolving targets and modifying their properties as a single atomic batch delta.",
+  "action": {
+    "const": "batch_by_filter"
+  },
+  "required": [
+    "action",
+    "base_revision_id",
+    "filters",
+    "template_mutation"
+  ],
+  "properties": {
+    "action": {
+      "const": "batch_by_filter"
+    },
+    "base_revision_id": {
+      "type": "string",
+      "description": "Exact historical commit hash used to anchor and resolve query results deterministically."
+    },
+    "filters": {
+      "type": "array",
+      "items": {
+        "$ref": "FilterRule"
+      }
+    },
+    "template_mutation": {
+      "type": "object",
+      "required": [
+        "mutation_type"
+      ],
+      "oneOf": [
+        {
+          "mutation_type": {
+            "const": "batch_modify_allocations"
+          },
+          "target_allocation_type": {
+            "type": "string"
+          },
+          "patch_allocation": {
+            "$ref": "allocation_block"
+          }
+        },
+        {
+          "mutation_type": {
+            "const": "batch_remove_items"
+          }
+        },
+        {
+          "mutation_type": {
+            "const": "batch_modify_sku"
+          },
+          "after_sku": {
+            "type": "string"
+          }
+        },
+        {
+          "mutation_type": {
+            "const": "batch_duplicate_and_reallocate"
+          },
+          "patch_allocations": {
+            "type": "array",
+            "items": {
+              "$ref": "allocation_block"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

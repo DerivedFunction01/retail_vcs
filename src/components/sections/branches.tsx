@@ -4,7 +4,6 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import {
   GitBranch,
-  GitCommitHorizontal,
   FlaskConical,
   ArrowRightLeft,
   Landmark,
@@ -113,7 +112,7 @@ export function BranchesSection() {
 
   return (
     <section id="branches" ref={ref} className="py-24 sm:py-32 relative">
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-rrom-transparent via-border to-transparent" />
 
       {/* Background accent */}
       <div className="absolute top-1/3 right-0 w-72 h-72 rounded-full bg-primary/3 blur-[150px]" />
@@ -187,13 +186,13 @@ export function BranchesSection() {
                       className="flex items-start gap-2 text-xs text-muted-foreground/80"
                     >
                       <div
-                        className={`w-1.5 h-1.5 rounded-full ${branch.color.replace("text-", "bg-")} mt-1.5 flex-shrink-0 opacity-50`}
+                        className={`w-1.5 h-1.5 rounded-full ${branch.color.replace("text-", "bg-")} mt-1.5 shrink-0 opacity-50`}
                       />
                       {b}
                     </div>
                   ))}
                 </div>
-                <div className="code-block text-xs !py-2 !px-3 !text-[0.75rem]">
+                <div className="code-block text-xs py-2! px-3! text-[0.75rem]!">
                   {branch.example}
                 </div>
               </motion.div>
@@ -265,7 +264,7 @@ export function BranchesSection() {
               >
                 <div className="flex items-center gap-4">
                   <div
-                    className={`w-12 h-12 rounded-full ${layer.bgColor} flex items-center justify-center flex-shrink-0`}
+                    className={`w-12 h-12 rounded-full ${layer.bgColor} flex items-center justify-center shrink-0`}
                   >
                     <span className={`text-lg font-bold ${layer.color}`}>
                       {layer.layer}

@@ -1,0 +1,13 @@
+{
+  "description": "Remove or decrease the quantity of an item.",
+  "action": { "const": "remove_item" },
+  "required": ["action", "line_id", "qty"],
+  "properties": {
+    "action": { "const": "remove_item" },
+    "line_id": { "type": "string" },
+    "qty": {
+      "type": "number",
+      "minimum": 0.0001
+    }
+  }
+}

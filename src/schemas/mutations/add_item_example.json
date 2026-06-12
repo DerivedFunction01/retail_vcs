@@ -1,0 +1,23 @@
+[
+  {
+    "action": "add_item",
+    "line_id": "line-001-burger",
+    "parent_line_id": null,
+    "sku": "SKU-BURGER-CLASSIC",
+    "qty": 1,
+    "allocations": [
+      "alloc-001-assign-bob",
+      "alloc-002-pay-bob"
+    ],
+    "comment": "Adding a burger to Bob's order"
+  },
+  {
+    "action": "add_item",
+    "line_id": "line-002-no-onions",
+    "parent_line_id": "line-001-burger",
+    "sku": "MOD-NO-ONIONS",
+    "qty": 1,
+    "allocations": [],
+    "comment": "Adding a modifier (parent-linked)"
+  }
+]

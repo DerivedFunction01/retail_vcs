@@ -1,0 +1,30 @@
+{
+  "action": "batch_by_filter",
+  "base_revision_id": "sha-a1b2c3d4",
+  "filters": [
+    {
+      "property": "payer",
+      "operator": "equals",
+      "value": "Alice"
+    }
+  ],
+  "template_mutation": {
+    "mutation_type": "batch_modify_allocations",
+    "target_allocation_type": "payment",
+    "patch_allocation": {
+      "allocation_id": "alloc-bob-pay",
+      "correlation_id": "customer-bob-group",
+      "type": "payment",
+      "payer": "Bob",
+      "method": "Cash",
+      "payment_strategy": {
+        "strategy_type": "percentage",
+        "value": 1.0
+      },
+      "time_of_payment": {
+        "type": "immediate",
+        "calculated_at": "2026-06-11T17:00:00Z"
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+[
+  {
+    "action": "add_item",
+    "line_id": "line-promo-global-10pct",
+    "parent_line_id": null,
+    "sku": "10PCT-OFF-GLOBAL",
+    "qty": 1,
+    "allocations": [],
+    "description": "Add a 10% global discount"
+  },
+  {
+    "action": "add_item",
+    "line_id": "line-discount-01",
+    "parent_line_id": "line-001-burger",
+    "sku": "CREDIT-MANUAL-FIVE",
+    "qty": 1,
+    "allocations": [
+      "alloc-bob-pay"
+    ],
+    "description": "Add a $5 discount to the burger"
+  }
+]

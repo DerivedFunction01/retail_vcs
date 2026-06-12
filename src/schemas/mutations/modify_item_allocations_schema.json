@@ -1,0 +1,32 @@
+{
+  "description": "Replace the array of linked allocation contract IDs associated with an existing line item.",
+  "action": {
+    "const": "modify_item_allocations"
+  },
+  "required": [
+    "action",
+    "line_id",
+    "before_allocations",
+    "after_allocations"
+  ],
+  "properties": {
+    "action": {
+      "const": "modify_item_allocations"
+    },
+    "line_id": {
+      "type": "string"
+    },
+    "before_allocations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "after_allocations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -1,0 +1,78 @@
+[
+  {
+    "description": "Declare or update an allocation contract (assignment, payment, fulfillment) at the global repository level.",
+    "action": {
+      "const": "declare_allocation"
+    },
+    "required": [
+      "action",
+      "allocation"
+    ],
+    "properties": {
+      "action": {
+        "const": "declare_allocation"
+      },
+      "allocation": {
+        "$ref": "allocation_block"
+      }
+    }
+  },
+  {
+    "type": {
+      "const": "assignment"
+    },
+    "entity": {
+      "type": "string"
+    }
+  },
+  {
+    "type": {
+      "const": "payment"
+    },
+    "payer": {
+      "type": "string"
+    },
+    "method": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "payment_strategy": {
+      "strategy_type": {
+        "enum": [
+          "percentage",
+          "fixed",
+          "remaining"
+        ]
+      },
+      "value": {
+        "type": [
+          "number",
+          "null"
+        ]
+      }
+    },
+    "time": {}
+  },
+  {
+    "type": {
+      "const": "fulfillment"
+    },
+    "method": {
+      "type": "string"
+    },
+    "time": {},
+    "fulfillment_metadata": {
+      "destination_label": {
+        "type": "string"
+      },
+      "destination_id": {
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    }
+  }
+]

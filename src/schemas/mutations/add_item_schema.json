@@ -1,0 +1,42 @@
+{
+  "description": "Add an item, modifier, or offer line-item to the transaction tree.",
+  "action": {
+    "const": "add_item"
+  },
+  "required": [
+    "action",
+    "line_id",
+    "parent_line_id",
+    "sku",
+    "qty",
+    "allocations"
+  ],
+  "properties": {
+    "action": {
+      "const": "add_item"
+    },
+    "line_id": {
+      "type": "string"
+    },
+    "parent_line_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "sku": {
+      "type": "string"
+    },
+    "qty": {
+      "type": "number",
+      "minimum": 0.0001
+    },
+    "allocations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Flat array of unique allocation IDs associated with this item."
+    }
+  }
+}

@@ -4,7 +4,6 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import {
   GitMerge,
-  AlertTriangle,
   CheckCircle2,
   XCircle,
   Eye,
@@ -102,7 +101,7 @@ export function MergeSection() {
 
   return (
     <section id="merge" ref={ref} className="py-24 sm:py-32 relative">
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-border to-transparent" />
 
       <div className="max-w-7xl mx-auto px-6">
         {/* Section header */}
@@ -336,7 +335,7 @@ export function MergeSection() {
                     key={s.step}
                     className="flex items-start gap-3 text-sm"
                   >
-                    <div className="w-6 h-6 rounded-full bg-amber-accent/10 flex items-center justify-center flex-shrink-0 text-xs font-bold text-amber-accent">
+                    <div className="w-6 h-6 rounded-full bg-amber-accent/10 flex items-center justify-center shrink-0 text-xs font-bold text-amber-accent">
                       {s.step}
                     </div>
                     <span className="text-muted-foreground">{s.text}</span>

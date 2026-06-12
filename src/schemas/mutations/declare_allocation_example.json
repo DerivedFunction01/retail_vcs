@@ -1,0 +1,18 @@
+{
+  "action": "declare_allocation",
+  "allocation": {
+    "allocation_id": "alloc-102-pay",
+    "correlation_id": "customer-alice-group",
+    "type": "payment",
+    "payer": "Alice",
+    "method": "Visa",
+    "payment_strategy": {
+      "strategy_type": "percentage",
+      "value": 0.6
+    },
+    "time_of_payment": {
+      "type": "immediate",
+      "calculated_at": "2026-06-11T16:30:00Z"
+    }
+  }
+}

@@ -1,0 +1,161 @@
+{
+    "title": "VCSRetailUniversalQueryEnvelope",
+    "description": "Unified read-only projection request to filter, slice, or aggregate an immutable retail repository branch.",
+    "type": "object",
+    "required": [
+        "target_context",
+        "filter_delta",
+        "view_mode",
+        "order_constraints",
+        "commit"
+    ],
+    "properties": {
+        "target_context": {
+            "type": "object",
+            "required": [
+                "context_type",
+                "context_id",
+                "revision_id"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "context_type": {
+                    "type": "string",
+                    "enum": [
+                        "cart",
+                        "catalog",
+                        "inventory_warehouse"
+                    ]
+                },
+                "context_id": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "revision_id": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            }
+        },
+        "filter_delta": {
+            "type": "object",
+            "required": [
+                "add_filters",
+                "remove_filters"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "add_filters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/FilterRule"
+                    }
+                },
+                "remove_filters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/FilterRule"
+                    }
+                }
+            }
+        },
+        "view_mode": {
+            "type": "string",
+            "enum": [
+                "item_level",
+                "aggregate_by_payer",
+                "kitchen_display_kds",
+                "tax_surcharge_breakdown",
+                "fulfillment_logistics_timeline",
+                "catalog_listing_view",
+                "recommendations_carousel",
+                "inventory_depletion_report"
+            ]
+        },
+        "order_constraints": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "budget_cap": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "age_verification_required": {
+                    "type": "boolean"
+                },
+                "allow_backorder": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "commit": {
+            "type": "boolean",
+            "description": "If true, freezes and locks the compiled query state to prevent UI re-calculation."
+        }
+    },
+    "$defs": {
+        "FilterRule": {
+            "type": "object",
+            "required": [
+                "property",
+                "operator",
+                "value"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "property": {
+                    "type": "string",
+                    "enum": [
+                        "name",
+                        "sku",
+                        "payer",
+                        "assignee",
+                        "fulfillment_method",
+                        "sku_category",
+                        "tax_status",
+                        "price",
+                        "quantity",
+                        "popularity_index",
+                        "dietary_flags",
+                        "allergens",
+                        "brand"
+                    ]
+                },
+                "operator": {
+                    "type": "string",
+                    "enum": [
+                        "equals",
+                        "not_equals",
+                        "in_set",
+                        "not_in_set",
+                        "greater_than",
+                        "greater_than_or_equal",
+                        "less_than",
+                        "less_than_or_equal",
+                        "like",
+                        "not_like"
+                    ]
+                },
+                "value": {
+                    "type": [
+                        "string",
+                        "number",
+                        "array"
+                    ],
+                    "items": {
+                        "type": [
+                            "string",
+                            "number"
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}

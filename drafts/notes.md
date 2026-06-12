@@ -197,268 +197,513 @@ This guarantees that orphaned items (like a paid warranty for a non-existent lap
 2.5 Production JSON Schema: VCS Delta Commit Envelope
 
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "VCSDeltaCommitEnvelope",
-  "description": "An immutable, cryptographic commit containing fine-grained transaction deltas for version-controlled shopping states.",
-  "type": "object",
-  "required": [
-    "commit_hash",
-    "parent_hash",
-    "merge_parent_hashes",
-    "branch",
-    "timestamp",
-    "author_id",
-    "deltas"
-  ],
-  "properties": {
-    "commit_hash": {
-      "type": "string",
-      "description": "Cryptographic digest of this transaction state update."
-    },
-    "parent_hash": {
-      "type": ["string", "null"],
-      "description": "The cryptographic hash of the immediate previous commit. Null for the root commit of a transaction."
-    },
-    "merge_parent_hashes": {
-      "type": ["string", "null"],
-      "description": "The cryptographic hash of the secondary parent being merged in. Non-null only on merge commits."
-    },
-    "branch": {
-      "type": "string",
-      "description": "Target workspace branch name (e.g., 'main', 'split-check-whatif')."
-    },
-    "timestamp": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "author_id": {
-      "type": "string",
-      "description": "Identifies the cashier terminal, server, customer application, or automated agent."
-    },
-    "metadata": {
-      "type": "object",
-      "additionalProperties": true
-    },
-    "deltas": {
-      "type": "array",
-      "description": "Chronological array of polymorphic state changes within this commit.",
-      "items": {
-        "$ref": "#/$defs/DeltaOperation"
-      }
-    }
-  },
-  "$defs": {
-    "DeltaOperation": {
-      "type": "object",
-      "required": ["action"],
-      "oneOf": [
-        {
-          "description": "Declare or update an allocation contract (assignment, payment, fulfillment) at the global repository level.",
-          "properties": {
-            "action": { "const": "declare_allocation" },
-            "allocation": { "$ref": "#/$defs/allocation_block" }
-          },
-          "required": ["action", "allocation"]
-        },
-        {
-          "description": "Add an item, modifier, or offer line-item to the transaction tree.",
-          "properties": {
-            "action": { "const": "add_item" },
-            "line_id": { "type": "string" },
-            "parent_line_id": { "type": ["string", "null"] },
-            "sku": { "type": "string" },
-            "qty": { "type": "number", "minimum": 0.0001 },
-            "allocations": {
-              "type": "array",
-              "items": { "type": "string" },
-              "description": "Flat array of unique allocation IDs associated with this item."
-            }
-          },
-          "required": [
-            "line_id",
-            "parent_line_id",
-            "sku",
-            "qty",
-            "allocations"
-          ]
-        },
-        {
-          "description": "Remove or decrease the quantity of an item.",
-          "properties": {
-            "action": { "const": "remove_item" },
-            "line_id": { "type": "string" },
-            "qty": { "type": "number", "minimum": 0.0001 }
-          },
-          "required": ["line_id", "qty"]
-        },
-        {
-          "description": "Replace the array of linked allocation contract IDs associated with an existing line item.",
-          "properties": {
-            "action": { "const": "modify_item_allocations" },
-            "line_id": { "type": "string" },
-            "before_allocations": {
-              "type": "array",
-              "items": { "type": "string" }
-            },
-            "after_allocations": {
-              "type": "array",
-              "items": { "type": "string" }
-            }
-          },
-          "required": ["line_id", "before_allocations", "after_allocations"]
-        },
-        {
-          "description": "Swap the SKU of an item while preserving all other properties and linked allocations.",
-          "properties": {
-            "action": { "const": "modify_sku" },
-            "line_id": { "type": "string" },
-            "before_sku": { "type": "string" },
-            "after_sku": { "type": "string" }
-          },
-          "required": ["line_id", "before_sku", "after_sku"]
-        },
-        {
-          "description": "Evaluate a list of filter rules against a stable historical state, resolving targets and modifying their properties as a single atomic batch delta.",
-          "properties": {
-            "action": { "const": "batch_by_filter" },
-            "base_revision_id": { 
-              "type": "string",
-              "description": "The exact historical commit hash used to anchor and resolve query results deterministically."
-            },
-            "filters": {
-              "type": "array",
-              "items": { "$ref": "#/$defs/FilterRule" }
-            },
-            "template_mutation": {
-              "type": "object",
-              "required": ["mutation_type"],
-              "oneOf": [
-                {
-                  "properties": {
-                    "mutation_type": { "const": "batch_modify_allocations" },
-                    "target_allocation_type": { "type": "string" },
-                    "patch_allocation": { "$ref": "#/$defs/allocation_block" }
-                  },
-                  "required": ["target_allocation_type", "patch_allocation"]
-                },
-                {
-                  "properties": {
-                    "mutation_type": { "const": "batch_remove_items" }
-                  }
-                },
-                {
-                  "properties": {
-                    "mutation_type": { "const": "batch_modify_sku" },
-                    "after_sku": { "type": "string" }
-                  },
-                  "required": ["after_sku"]
-                },
-                {
-                  "properties": {
-                    "mutation_type": { "const": "batch_duplicate_and_reallocate" },
-                    "patch_allocations": {
-                      "type": "array",
-                      "description": "Complete replacement allocations applied to the newly duplicated copies.",
-                      "items": { "$ref": "#/$defs/allocation_block" }
-                    }
-                  },
-                  "required": ["patch_allocations"]
-                }
-              ]
-            }
-          },
-          "required": ["base_revision_id", "filters", "template_mutation"]
-        }
-      ]
-    },
-    "modifier_block": {
-      "type": "object",
-      "required": ["qualitative_indicator", "target_scope"],
-      "properties": {
-        "qualitative_indicator": { "type": ["string", "null"] },
-        "target_scope": { "type": ["string", "null"] }
-      }
-    },
-    "allocation_block": {
-      "type": "object",
-      "required": ["allocation_id", "type"],
-      "properties": {
-        "allocation_id": {
-          "type": "string",
-          "description": "Globally unique, immutable tracking key for this specific allocation instance."
-        },
-        "correlation_id": {
-          "type": ["string", "null"],
-          "description": "Optional secondary tracking key to logically group related distinct allocations (e.g., matching Alice's split bill directly to Alice's delivery route) without creating structural coupling."
-        },
-        "type": {
-          "type": "string"
-        }
-      },
-      "oneOf": [
-        {
-          "properties": {
-            "type": { "const": "assignment" },
-            "entity": { "type": "string" }
-          },
-          "required": ["entity"]
-        },
-        {
-          "properties": {
-            "type": { "const": "payment" },
-            "payer": { "type": "string" },
-            "method": { "type": ["string", "null"] },
-            "payment_strategy": {
-              "type": "object",
-              "required": ["strategy_type", "value"],
-              "properties": {
-                "strategy_type": { "type": "string", "enum": ["percentage", "fixed", "remaining"] },
-                "value": { "type": ["number", "null"] }
-              }
-            },
-            "time_of_payment": {
-              "type": "object",
-              "required": ["type", "calculated_at"],
-              "properties": {
-                "type": { "type": "string" },
-                "calculated_at": { "type": ["string", "null"], "format": "date-time" }
-              }
-            }
-          },
-          "required": ["payer", "method", "payment_strategy", "time_of_payment"]
-        },
-        {
-          "properties": {
-            "type": { "const": "fulfillment" },
-            "method": { "type": "string" },
-            "time": {
-              "type": "object",
-              "required": ["type", "calculated_at"],
-              "properties": {
-                "type": { "type": "string" },
-                "calculated_at": { "type": ["string", "null"], "format": "date-time" }
-              }
-            },
-            "fulfillment_metadata": {
-              "type": "object",
-              "required": ["destination_label"],
-              "properties": {
-                "destination_label": {
-                  "type": "string",
-                  "description": "User-friendly name of the target location, e.g., 'Home' or 'Business Main office'."
-                },
-                "destination_id": {
-                  "type": ["string", "null"],
-                  "description": "Optional unique key referencing a structured profile address record."
-                }
-              }
-            }
-          },
-          "required": ["method", "time", "fulfillment_metadata"]
-        }
-      ]
-    }
-  }
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VCSDeltaCommitEnvelope",
+  "description": "An immutable, cryptographic commit containing fine-grained transaction deltas for version-controlled shopping states.",
+  "type": "object",
+  "required": [
+    "commit_hash",
+    "parent_hash",
+    "merge_parent_hashes",
+    "branch",
+    "timestamp",
+    "author_id",
+    "deltas"
+  ],
+  "properties": {
+    "commit_hash": {
+      "type": "string",
+      "description": "Cryptographic digest of this transaction state update."
+    },
+    "parent_hash": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Hash of the immediate previous commit. Null for the root commit."
+    },
+    "merge_parent_hashes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Hash of the secondary parents being merged in. Non-null only on merge commits."
+    },
+    "branch": {
+      "type": "string",
+      "description": "Target workspace branch name (e.g., 'main', 'split-check-whatif')."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "author_id": {
+      "type": "string",
+      "description": "Identifies the cashier terminal, server, customer application, or automated agent."
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "deltas": {
+      "type": "array",
+      "description": "Chronological array of polymorphic state changes within this commit.",
+      "items": {
+        "$ref": "#/$defs/DeltaOperation"
+      }
+    }
+  },
+  "$defs": {
+    "DeltaOperation": {
+      "type": "object",
+      "required": [
+        "action"
+      ],
+      "oneOf": [
+        {
+          "description": "Declare or update an allocation contract (assignment, payment, fulfillment) at the global repository level.",
+          "properties": {
+            "action": {
+              "const": "declare_allocation"
+            },
+            "allocation": {
+              "$ref": "#/$defs/allocation_block"
+            }
+          },
+          "required": [
+            "action",
+            "allocation"
+          ]
+        },
+        {
+          "description": "Add an item, modifier, or offer line-item to the transaction tree.",
+          "properties": {
+            "action": {
+              "const": "add_item"
+            },
+            "line_id": {
+              "type": "string"
+            },
+            "parent_line_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "sku": {
+              "type": "string"
+            },
+            "qty": {
+              "type": "number",
+              "minimum": 0.0001
+            },
+            "allocations": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Flat array of unique allocation IDs associated with this item."
+            }
+          },
+          "required": [
+            "action",
+            "line_id",
+            "parent_line_id",
+            "sku",
+            "qty",
+            "allocations"
+          ]
+        },
+        {
+          "description": "Remove or decrease the quantity of an item.",
+          "properties": {
+            "action": {
+              "const": "remove_item"
+            },
+            "line_id": {
+              "type": "string"
+            },
+            "qty": {
+              "type": "number",
+              "minimum": 0.0001
+            }
+          },
+          "required": [
+            "action",
+            "line_id",
+            "qty"
+          ]
+        },
+        {
+          "description": "Replace the array of linked allocation contract IDs associated with an existing line item.",
+          "properties": {
+            "action": {
+              "const": "modify_item_allocations"
+            },
+            "line_id": {
+              "type": "string"
+            },
+            "before_allocations": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "after_allocations": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "action",
+            "line_id",
+            "before_allocations",
+            "after_allocations"
+          ]
+        },
+        {
+          "description": "Swap the SKU of an item while preserving all other properties and linked allocations.",
+          "properties": {
+            "action": {
+              "const": "modify_sku"
+            },
+            "line_id": {
+              "type": "string"
+            },
+            "before_sku": {
+              "type": "string"
+            },
+            "after_sku": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "action",
+            "line_id",
+            "before_sku",
+            "after_sku"
+          ]
+        },
+        {
+          "description": "Evaluate a list of filter rules against a stable historical state, resolving targets and modifying their properties as a single atomic batch delta.",
+          "properties": {
+            "action": {
+              "const": "batch_by_filter"
+            },
+            "base_revision_id": {
+              "type": "string",
+              "description": "The exact historical commit hash used to anchor and resolve query results deterministically."
+            },
+            "filters": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/FilterRule"
+              }
+            },
+            "template_mutation": {
+              "type": "object",
+              "required": [
+                "mutation_type"
+              ],
+              "oneOf": [
+                {
+                  "properties": {
+                    "mutation_type": {
+                      "const": "batch_modify_allocations"
+                    },
+                    "target_allocation_type": {
+                      "type": "string"
+                    },
+                    "patch_allocation": {
+                      "$ref": "#/$defs/allocation_block"
+                    }
+                  },
+                  "required": [
+                    "target_allocation_type",
+                    "patch_allocation"
+                  ]
+                },
+                {
+                  "properties": {
+                    "mutation_type": {
+                      "const": "batch_remove_items"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "mutation_type": {
+                      "const": "batch_modify_sku"
+                    },
+                    "after_sku": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "after_sku"
+                  ]
+                },
+                {
+                  "properties": {
+                    "mutation_type": {
+                      "const": "batch_duplicate_and_reallocate"
+                    },
+                    "patch_allocations": {
+                      "type": "array",
+                      "description": "Complete replacement allocations applied to the newly duplicated copies.",
+                      "items": {
+                        "$ref": "#/$defs/allocation_block"
+                      }
+                    }
+                  },
+                  "required": [
+                    "patch_allocations"
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [
+            "action",
+            "base_revision_id",
+            "filters",
+            "template_mutation"
+          ]
+        }
+      ]
+    },
+    "FilterRule": {
+      "type": "object",
+      "required": [
+        "property",
+        "operator",
+        "value"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "property": {
+          "type": "string",
+          "enum": [
+            "name",
+            "sku",
+            "payer",
+            "assignee",
+            "fulfillment_method",
+            "sku_category",
+            "tax_status",
+            "price",
+            "quantity",
+            "popularity_index",
+            "dietary_flags",
+            "allergens",
+            "brand"
+          ]
+        },
+        "operator": {
+          "type": "string",
+          "enum": [
+            "equals",
+            "not_equals",
+            "in_set",
+            "not_in_set",
+            "greater_than",
+            "greater_than_or_equal",
+            "less_than",
+            "less_than_or_equal",
+            "like",
+            "not_like"
+          ]
+        },
+        "value": {
+          "type": [
+            "string",
+            "number",
+            "array"
+          ],
+          "items": {
+            "type": [
+              "string",
+              "number"
+            ]
+          }
+        }
+      }
+    },
+    "modifier_block": {
+      "type": "object",
+      "required": [
+        "qualitative_indicator",
+        "target_scope"
+      ],
+      "properties": {
+        "qualitative_indicator": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "target_scope": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "allocation_block": {
+      "type": "object",
+      "required": [
+        "allocation_id",
+        "type"
+      ],
+      "properties": {
+        "allocation_id": {
+          "type": "string",
+          "description": "Globally unique, immutable tracking key for this specific allocation instance."
+        },
+        "correlation_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Optional secondary tracking key to logically group related distinct allocations (e.g., matching Alice's split bill directly to Alice's delivery route) without creating structural coupling."
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "type": {
+              "const": "assignment",
+              "description": "Indicates that this allocation for who to consume the item."
+            },
+            "entity": {
+              "type": "string",
+              "description": "The entity name or id to which the item is assigned."
+            }
+          },
+          "required": [
+            "entity"
+          ]
+        },
+        {
+          "properties": {
+            "type": {
+              "const": "payment",
+              "description": "Indicates that this allocation is for payment purposes."
+            },
+            "payer": {
+              "type": "string",
+              "description": "The entity name or id of the payer."
+            },
+            "method": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The payment method to be used such as 'credit_card', 'debit_card', 'cash', 'gift_card', 'crypto', etcs."
+            },
+            "payment_strategy": {
+              "type": "object",
+              "required": [
+                "strategy_type",
+                "value"
+              ],
+              "properties": {
+                "strategy_type": {
+                  "type": "string",
+                  "description": "The type of the payment strategy.",
+                  "enum": [
+                    "percentage",
+                    "fixed",
+                    "remaining"
+                  ]
+                },
+                "value": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "The value of the payment strategy. For percentage, this is the percentage of the total amount (0-100). For fixed, this is the fixed amount. For remaining, this is null."
+                }
+              }
+            },
+            "time": {
+              "$ref": "#/$defs/time_block"
+            }
+          },
+          "required": [
+            "payer",
+            "method",
+            "payment_strategy",
+            "time_of_payment"
+          ]
+        },
+        {
+          "properties": {
+            "type": {
+              "const": "fulfillment"
+            },
+            "method": {
+              "type": "string"
+            },
+            "time": {
+              "$ref": "#/$defs/time_block"
+            },
+            "fulfillment_metadata": {
+              "type": "object",
+              "required": [
+                "destination_label"
+              ],
+              "properties": {
+                "destination_label": {
+                  "type": "string",
+                  "description": "User-friendly name of the target location, e.g., 'Home' or 'Business Main office', or 'Table 5'"
+                },
+                "destination_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Optional unique key referencing a structured profile address record."
+                }
+              }
+            }
+          },
+          "required": [
+            "method",
+            "time",
+            "fulfillment_metadata"
+          ]
+        }
+      ]
+    },
+    "time_block": {
+      "type": "object",
+      "required": [
+        "type",
+        "calculated_at"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The type of time, e.g., 'immediate', 'scheduled', 'deferred'."
+        },
+        "calculated_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time",
+          "description": "The timestamp when the time is calculated or scheduled."
+        }
+      }
+    }
+  }
 }
 
 
@@ -981,7 +1226,7 @@ Playbook D: Clean Three-Way Merge Commit
 {
   "commit_hash": "c4_merge_hash_final",
   "parent_hash": "c1_hash_burger_99",
-  "merge_parent_hashes": "c3_hash_upgrade_03",
+  "merge_parent_hashes": ["c3_hash_upgrade_03"],
   "branch": "main",
   "timestamp": "2026-06-11T16:25:00Z",
   "author_id": "terminal-01",

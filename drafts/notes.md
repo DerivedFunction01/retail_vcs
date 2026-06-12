@@ -9,26 +9,89 @@ By treating retail transactional states as a Directed Acyclic Graph (DAG) of app
 
 Part 1: Architectural Vision & Strategic Redundancy
 
-Traditional e-commerce backends (e.g., Shopify, Salesforce Commerce Cloud, enterprise POS middleware) are engineered around the Snapshot State Pattern (mutating database records via CRUD operations). This design requires heavy server-side orchestration, introduces concurrency risks, and poses significant integration bottlenecks for AI agents.
+Traditional e-commerce backends (e.g., Shopify, Salesforce Commerce Cloud, enterprise POS middleware) are engineered around the Snapshot State Pattern (mutating database records via CRUD operations). This design requires heavy server-side orchestration, introduces concurrency risks, and poses significant integration bottlenecks for AI agents. We replace it with an offline-first, three-tier Git-style architecture.
 
-       Monolithic Unified Commerce Stack                  VCS Local-First Stack
-  ┌─────────────────────────────────────────┐   ┌─────────────────────────────────────────┐
-  │        Multi-Channel Sync Engine        │   │                                         │
-  ├─────────────────────────────────────────┤   │                                         │
-  │       Draft Order State Database        │   │   Local VCS Client Engine (Isomorphic)  │
-  ├─────────────────────────────────────────┤   │   - Reconciles state via Git Merges     │
-  │      Conversational Session Memory      │   │   - Evaluates splits via Allocations    │
-  ├─────────────────────────────────────────┤   │   - Resolves read-only queries locally  │
-  │       Dynamic Tax-Calculator API        │   │                                         │
-  └─────────────────────────────────────────┘   └─────────────────────────────────────────┘
-                       │                                             │
-                       ▼                                             ▼
-  ┌─────────────────────────────────────────┐   ┌─────────────────────────────────────────┐
-  │     Centralized Payment / Checkout      │   │   Definitive Settlement Ledger (Push)   │
-  └─────────────────────────────────────────┘   └─────────────────────────────────────────┘
+1.1 The Three-Tier Architecture
 
+The system is strictly divided into three isolated layers. The POS UI never talks to the Business API directly. It only talks to the local VCS Engine.
 
-1.1 The AI Agent "Query-by-Intent" Paradigm
+┌─────────────────────────┐      ┌─────────────────────────┐      ┌─────────────────────────┐
+│       Tier 1: UI        │      │    Tier 2: VCS Engine   │      │    Tier 3: Backend      │
+│      (The POS App)      │      │    (The "Git" Engine)   │      │   (The Business API)    │
+│                         │      │                         │      │                         │
+│ - Pure React/Vue UI     │◄────►│ - Runs in Browser/App   │◄────►│ - Remote 'Origin' Server│
+│ - Zero Business Logic   │ Read │ - IndexedDB/SQLite Log  │ Sync │ - SQL Master Databases  │
+│ - Renders Reducer State │ Write│ - Executes Reductions   │ Push │ - Webhook Connectors    │
+│ - AI Agent Chat Input   │      │ - Sparse Catalog Cache  │ Pull │ - Heavy CRM/Inventory   │
+└─────────────────────────┘      └─────────────────────────┘      └─────────────────────────┘
+
+1.1.1 The Presentation Layer (POS UI / AI Agent)
+
+The UI is a purely reactive view. It observes the state object emitted by the VCS Engine. When a user taps a button or an AI agent issues a command, the UI simply dispatches a commit payload to Tier 2. It does not know the price of items, nor does it know how to calculate taxes.
+
+1.1.2 The Local VCS Engine (The "Git" Engine)
+
+This is an isomorphic library (e.g., an npm package or WebAssembly module) running locally on the terminal or customer's phone. It holds the "Repo" (the local transaction log). It handles branching, merging, and mathematical state reduction ($S_t = S_0 \oplus \sum \Delta$) completely offline.
+
+1.1.3 The Remote Gateway (The Business API)
+
+This is the central source of truth. It manages the global product catalog, inventory deducts, and final payment settlements. It exposes synchronization endpoints (/sync/push, /sync/pull) acting exactly like a remote Git server.
+
+1.2 The "Order as a Repository" Lifecycle
+
+In this architecture, starting a new order/cart is mechanically identical to initializing a new Git repository. Here is the lifecycle of a transaction mapped to VCS concepts:
+
+Phase 1: git init (Cart Initialization)
+When a customer sits at Table 12, or opens a web app, the VCS Engine initializes a new local repository.
+The "Initial Config File": The repo is instantiated with a configuration block defining the target_context:
+```json
+{
+  "context_type": "cart",
+  "context_id": "table-12",
+  "created_at": "2026-06-12T12:00:00Z",
+  "head": null
+}
+```
+
+Phase 2: git fetch origin (Hydrating the Catalog)
+The VCS Engine requests the latest active product catalog from the Business API. This is stored locally in the engine's cache so the POS UI can render buttons and AI agents can query the menu without network latency.
+
+Phase 3: git commit (Building the Order)
+The user taps "Add Burger", or the AI agent compiles a batch_duplicate_and_reallocate rule.
+The POS UI passes a VCSDeltaCommitEnvelope to the VCS Engine.
+The VCS Engine appends it to the local log and updates the head pointer.
+The VCS Engine immediately runs the Reducer and pushes the new subtotal to the POS UI. No network request is made.
+
+Phase 4: git branch & git merge (Split Checks)
+Alice wants to see what her half of the bill looks like if she pays for the drinks.
+The VCS Engine creates a branch: what-if-alice.
+Allocations are modified on this branch. The POS UI renders the branch.
+If accepted, the Engine performs a git merge back into main, running the 3-way conflict matrix locally.
+
+Phase 5: git push origin main (Settle & Sync)
+The transaction is complete, and payment has been authorized locally (via EMV terminal).
+The VCS Engine takes the local array of commits and pushes them to the Business API.
+The Business API verifies the cryptographic hashes.
+The Business API accepts the push, saving it to the master ledger database.
+
+Phase 6: Webhook Triggers (Backend Side-Effects)
+Once the Business API accepts the push, it triggers asynchronous connectors:
+- Inventory Connector: Sees the "Burger" commit and deducts buns and beef from the warehouse database.
+- Kitchen Connector: Sees the final state and prints a routing ticket to the kitchen display screen.
+
+1.3 Data Storage Boundaries
+
+To ensure local-first performance and offline capability, data storage is strictly divided:
+
+| Data Type | Storage Location | Sync Behavior |
+|---|---|---|
+| Transaction Commits (Deltas) | Local VCS Engine (IndexedDB) & Remote Master Ledger | Bidirectional (Push/Pull) |
+| Active Cart State (Projected) | RAM (In-Memory only) | Never Stored. Computed on the fly. |
+| Product Catalog (Menu) | Remote SQL DB & Local VCS Cache | One-way (Pull from Remote to Local) |
+| Physical Inventory (Warehouse) | Remote SQL DB only | Accessed asynchronously via Backend APIs |
+| Customer Profiles (CRM) | Remote SQL DB only | Looked up via API when linking allocation_id |
+
+1.4 The AI Agent "Query-by-Intent" Paradigm
 
 In legacy configurations, an AI shopping assistant must ingest and maintain full order state documents within its prompt context to perform reasoning. This results in severe context bloat, token inefficiency, latency, and rounding errors caused by models performing mathematical operations.
 
